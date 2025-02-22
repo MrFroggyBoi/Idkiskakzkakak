@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Info Exchange</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            margin: 50px; 
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            color: #333;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+            width: 50%;
+        }
+        textarea, input {
+            width: 80%; 
+            margin: 10px 0; 
+            padding: 10px;
+            border: 2px solid #ff758c;
+            border-radius: 5px;
+        }
+        #messages {
+            border: 2px solid #ff758c;
+            padding: 10px;
+            width: 80%;
+            margin: auto;
+            text-align: left;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #ff758c;
+            color: white;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #ff5252;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Secret Info Exchange</h2>
+        <h3>Account Registration</h3>
+        <input type="text" id="username" placeholder="Enter username"><br>
+        <input type="password" id="password" placeholder="Enter password"><br>
+        <button onclick="registerAccount()">Register</button>
+        <button onclick="loginAccount()">Login</button>
+        <h3>Enter and Share Info</h3>
+        <textarea id="infoInput" placeholder="Enter your info..."></textarea><br>
+        <button onclick="saveInfo()">Share Info</button>
+        <button onclick="clearInfo()">Clear Info</button>
+        <button onclick="exportInfo()">Export Info</button>
+        <button onclick="importInfo()">Import Info</button>
+        <input type="file" id="fileInput" style="display:none" onchange="handleFile(event)">
+        <h3>Shared Info:</h3>
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        let accounts = JSON.parse(localStorage.getItem("accounts")) || {};
+        let currentUser = localStorage.getItem("currentUser");
+
+        function registerAccount() {
+            let user = document.getElementById("username").value;
+            let pass = document.getElementById("password").value;
+            if (user in accounts) {
+                alert("Username already exists!");
+                return;
+            }
+            accounts[user] = pass;
+            localStorage.setItem("accounts", JSON.stringify(accounts));
+            alert("Account registered successfully!");
+        }
+
+        function loginAccount() {
+            let user = document.getElementById("username").value;
+            let pass = document.getElementById("password").value;
+            if (accounts[user] === pass) {
+                localStorage.setItem("currentUser", user);
+                alert("Login successful!");
+                displayInfo();
+            } else {
+                alert("Invalid credentials!");
+            }
+        }
+
+        function saveInfo() {
+            if (!localStorage.getItem("currentUser")) {
+                alert("You must be logged in to share info!");
+                return;
+            }
+            let info = document.getElementById("infoInput").value;
+            if (info.trim() === "") return;
+            let storedInfo = localStorage.getItem("sharedInfo") || "";
+            storedInfo += `\n${info}`;
+            localStorage.setItem("sharedInfo", storedInfo);
+            displayInfo();
+            document.getElementById("infoInput").value = "";
+        }
+
+        function displayInfo() {
+            let storedInfo = localStorage.getItem("sharedInfo") || "No shared info yet.";
+            document.getElementById("messages").innerText = storedInfo;
+        }
+
+        function clearInfo() {
+            localStorage.removeItem("sharedInfo");
+            displayInfo();
+        }
+
+        function exportInfo() {
+            let storedInfo = localStorage.getItem("sharedInfo") || "";
+            let blob = new Blob([storedInfo], { type: "text/plain" });
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "shared_info.txt";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function importInfo() {
+            document.getElementById("fileInput").click();
+        }
+
+        function handleFile(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                localStorage.setItem("sharedInfo", e.target.result);
+                displayInfo();
+            };
+            reader.readAsText(file);
+        }
+
+        displayInfo();
+    </script>
+</body>
+</html>
